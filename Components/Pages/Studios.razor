@@ -1,0 +1,216 @@
+@page "/studios"
+
+@inject IStudioRepository Repository
+
+<PageTitle>Studia</PageTitle>
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h1>Studia</h1>
+
+    <a href="/" class="btn btn-secondary">
+        Powrót na stronę główną
+    </a>
+</div>
+
+<h3>@(isEditing ? "Edytuj studio" : "Dodaj nowe studio")</h3>
+
+<EditForm Model="newStudio" OnValidSubmit="SaveStudio">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+
+    <div class="mb-3">
+        <label class="form-label">Nazwa</label>
+        <InputText class="form-control"
+                   @bind-Value="newStudio.Name" />
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Kraj</label>
+        <InputText class="form-control"
+                   @bind-Value="newStudio.Country" />
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Data założenia</label>
+        <InputDate class="form-control"
+                   @bind-Value="newStudio.FoundedDate" />
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Siedziba</label>
+        <InputText class="form-control"
+                   @bind-Value="newStudio.Headquarters" />
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Opis</label>
+        <InputTextArea class="form-control"
+                       @bind-Value="newStudio.Description" />
+    </div>
+
+    <button type="submit" class="btn btn-primary">
+        @(isEditing ? "Zapisz zmiany" : "Dodaj studio")
+    </button>
+
+    @if (isEditing)
+    {
+        <button type="button"
+                class="btn btn-secondary ms-2"
+                @onclick="CancelEdit">
+            Anuluj
+        </button>
+    }
+</EditForm>
+
+<hr />
+
+<h3>Lista studiów</h3>
+
+@if (studios == null)
+{
+    <p>Ładowanie danych...</p>
+}
+else if (studios.Count == 0)
+{
+    <p>Brak studiów w bazie danych.</p>
+}
+else
+{
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Nazwa studia</th>
+                <th>Kraj</th>
+                <th>Data założenia</th>
+                <th>Siedziba</th>
+                <th>Gry</th>
+                <th>Akcje</th>
+            </tr>
+        </thead>
+
+        <tbody>
+            @foreach (var studio in studios)
+            {
+                <tr>
+                    <td>
+                        <a href="@($"/studios/{studio.Id}")">
+                            @studio.Name
+                        </a>
+                    </td>
+                    <td>@studio.Country</td>
+                    <td>@studio.FoundedDate?.ToString("dd.MM.yyyy")</td>
+                    <td>@studio.Headquarters</td>
+                    <td>@(studio.VideoGames?.Count ?? 0)</td>
+                    <td>
+                        <button class="btn btn-warning btn-sm"
+                                @onclick="() => EditStudio(studio)">
+                            Edytuj
+                        </button>
+
+                        @if (studioIdToDelete == studio.Id)
+                        {
+                            <span class="ms-2">Usunąć?</span>
+
+                            <button class="btn btn-danger btn-sm ms-1"
+                                    @onclick="() => ConfirmDelete(studio.Id)">
+                                Tak
+                            </button>
+
+                            <button class="btn btn-secondary btn-sm ms-1"
+                                    @onclick="CancelDelete">
+                                Nie
+                            </button>
+                        }
+                        else
+                        {
+                            <button class="btn btn-danger btn-sm ms-1"
+                                    @onclick="() => AskDelete(studio.Id)">
+                                Usuń
+                            </button>
+                        }
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    private List<Studio>? studios;
+    private Studio newStudio = new();
+    private bool isEditing;
+    private int? studioIdToDelete;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadStudios();
+    }
+
+    private async Task LoadStudios()
+    {
+        studios = await Repository.GetAllAsync();
+    }
+
+    private async Task SaveStudio()
+    {
+        if (isEditing)
+        {
+            await Repository.UpdateAsync(newStudio);
+        }
+        else
+        {
+            await Repository.AddAsync(newStudio);
+        }
+
+        newStudio = new Studio();
+        isEditing = false;
+
+        await LoadStudios();
+    }
+
+    private void EditStudio(Studio studio)
+    {
+        newStudio = new Studio
+        {
+            Id = studio.Id,
+            Name = studio.Name,
+            Country = studio.Country,
+            FoundedDate = studio.FoundedDate,
+            Headquarters = studio.Headquarters,
+            Description = studio.Description
+        };
+
+        isEditing = true;
+    }
+
+    private void CancelEdit()
+    {
+        newStudio = new Studio();
+        isEditing = false;
+    }
+
+    private void AskDelete(int id)
+    {
+        studioIdToDelete = id;
+    }
+
+    private async Task ConfirmDelete(int id)
+    {
+        await Repository.DeleteAsync(id);
+
+        studioIdToDelete = null;
+
+        if (isEditing && newStudio.Id == id)
+        {
+            newStudio = new Studio();
+            isEditing = false;
+        }
+
+        await LoadStudios();
+    }
+
+    private void CancelDelete()
+    {
+        studioIdToDelete = null;
+    }
+}

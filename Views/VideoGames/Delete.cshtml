@@ -1,0 +1,33 @@
+@model VideoGame
+
+@{
+    ViewData["Title"] = "Usuń grę";
+}
+
+<h1>Usuń grę</h1>
+
+<h3>Czy na pewno chcesz usunąć tę grę?</h3>
+
+<dl class="row">
+    <dt class="col-sm-3">Tytuł gry</dt>
+    <dd class="col-sm-9">@Model.Title</dd>
+
+    <dt class="col-sm-3">Gatunek</dt>
+    <dd class="col-sm-9">@Model.Genre</dd>
+
+    <dt class="col-sm-3">Rok wydania</dt>
+    <dd class="col-sm-9">@Model.ReleaseYear</dd>
+
+    <dt class="col-sm-3">Ocena</dt>
+    <dd class="col-sm-9">@Model.Rating</dd>
+
+    <dt class="col-sm-3">Studio</dt>
+    <dd class="col-sm-9">@(Model.Studio?.Name ?? "Brak")</dd>
+</dl>
+
+<form asp-action="Delete">
+    <input type="hidden" asp-for="Id" />
+
+    <button type="submit" class="btn btn-danger">Usuń</button>
+    <a asp-action="Index" class="btn btn-secondary">Powrót do listy</a>
+</form>

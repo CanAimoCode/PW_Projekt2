@@ -1,0 +1,166 @@
+@page "/studios/{Id:int}"
+
+@inject IStudioRepository StudioRepository
+@inject IVideoGameRepository VideoGameRepository
+
+<PageTitle>Szczegóły studia</PageTitle>
+
+@if (!loaded)
+{
+    <p>Ładowanie danych...</p>
+}
+else if (studio == null)
+{
+    <p>Nie znaleziono studia.</p>
+}
+else
+{
+    <h1>@studio.Name</h1>
+
+    <p><strong>Kraj:</strong> @studio.Country</p>
+    <p><strong>Data założenia:</strong> @studio.FoundedDate?.ToString("dd.MM.yyyy")</p>
+    <p><strong>Siedziba:</strong> @studio.Headquarters</p>
+    <p><strong>Opis:</strong> @studio.Description</p>
+
+    <hr />
+
+    <h3>Gry studia</h3>
+
+    @if (studioGames.Count == 0)
+    {
+        <p>To studio nie ma jeszcze przypisanych gier.</p>
+    }
+    else
+    {
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Tytuł</th>
+                    <th>Gatunek</th>
+                    <th>Rok wydania</th>
+                    <th>Ocena</th>
+                    <th>Akcje</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                @foreach (var videoGame in studioGames)
+                {
+                    <tr>
+                        <td>@videoGame.Title</td>
+                        <td>@videoGame.Genre</td>
+                        <td>@videoGame.ReleaseYear</td>
+                        <td>@videoGame.Rating</td>
+                        <td>
+                            <button class="btn btn-danger btn-sm"
+                                    @onclick="() => RemoveGame(videoGame)">
+                                Usuń z listy
+                            </button>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+
+    <hr />
+
+    <h3>Przypisz grę do studia</h3>
+
+    @if (availableGames.Count == 0)
+    {
+        <p>Brak gier, które można przypisać.</p>
+    }
+    else
+    {
+        <div class="mb-3">
+            <label class="form-label">Wybierz grę</label>
+
+            <select class="form-select" @bind="selectedGameId">
+                <option value="0">-- Wybierz grę --</option>
+
+                @foreach (var videoGame in availableGames)
+                {
+                    <option value="@videoGame.Id">
+                        @videoGame.Title (@videoGame.ReleaseYear)
+                    </option>
+                }
+            </select>
+        </div>
+
+        <button class="btn btn-primary"
+                @onclick="AddGame"
+                disabled="@(selectedGameId == 0)">
+            Przypisz grę
+        </button>
+    }
+}
+
+<div class="mt-4">
+    <a href="/studios" class="btn btn-secondary">
+        Powrót do listy studiów
+    </a>
+</div>
+
+@code {
+    [Parameter]
+    public int Id { get; set; }
+
+    private Studio? studio;
+    private List<VideoGame> allGames = new();
+    private List<VideoGame> studioGames = new();
+    private List<VideoGame> availableGames = new();
+
+    private int selectedGameId;
+    private bool loaded;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        await LoadData();
+    }
+
+    private async Task LoadData()
+    {
+        studio = await StudioRepository.GetByIdAsync(Id);
+        loaded = true;
+
+        if (studio == null)
+            return;
+
+        allGames = await VideoGameRepository.GetAllAsync();
+
+        studioGames = allGames
+            .Where(g => g.StudioId == Id)
+            .ToList();
+
+        availableGames = allGames
+            .Where(g => g.StudioId == null)
+            .ToList();
+    }
+
+    private async Task AddGame()
+    {
+        var videoGame = allGames.FirstOrDefault(
+            g => g.Id == selectedGameId);
+
+        if (videoGame == null)
+            return;
+
+        videoGame.StudioId = Id;
+
+        await VideoGameRepository.UpdateAsync(videoGame);
+
+        selectedGameId = 0;
+
+        await LoadData();
+    }
+
+    private async Task RemoveGame(VideoGame videoGame)
+    {
+        videoGame.StudioId = null;
+
+        await VideoGameRepository.UpdateAsync(videoGame);
+
+        await LoadData();
+    }
+}

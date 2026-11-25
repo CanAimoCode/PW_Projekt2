@@ -1,0 +1,49 @@
+@model IEnumerable<VideoGame>
+
+@{
+    ViewData["Title"] = "Gry";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h1>Gry</h1>
+
+    <a asp-action="Create" class="btn btn-primary">Dodaj grę</a>
+</div>
+
+@if (!Model.Any())
+{
+    <p>Brak gier w bazie danych.</p>
+}
+else
+{
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Tytuł gry</th>
+                <th>Gatunek</th>
+                <th>Rok wydania</th>
+                <th>Ocena</th>
+                <th>Studio</th>
+                <th>Akcje</th>
+            </tr>
+        </thead>
+
+        <tbody>
+            @foreach (var videoGame in Model)
+            {
+                <tr>
+                    <td>@videoGame.Title</td>
+                    <td>@videoGame.Genre</td>
+                    <td>@videoGame.ReleaseYear</td>
+                    <td>@videoGame.Rating</td>
+                    <td>@(videoGame.Studio?.Name ?? "Brak")</td>
+                    <td>
+                        <a asp-action="Edit" asp-route-id="@videoGame.Id">Edytuj</a> |
+                        <a asp-action="Details" asp-route-id="@videoGame.Id">Szczegóły</a> |
+                        <a asp-action="Delete" asp-route-id="@videoGame.Id">Usuń</a>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}

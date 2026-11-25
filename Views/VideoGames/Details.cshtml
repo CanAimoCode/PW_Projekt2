@@ -1,0 +1,30 @@
+@model VideoGame
+
+@{
+    ViewData["Title"] = "Szczegóły gry";
+}
+
+<h1>Szczegóły gry</h1>
+
+<dl class="row">
+    <dt class="col-sm-3">Tytuł gry</dt>
+    <dd class="col-sm-9">@Model.Title</dd>
+
+    <dt class="col-sm-3">Gatunek</dt>
+    <dd class="col-sm-9">@Model.Genre</dd>
+
+    <dt class="col-sm-3">Rok wydania</dt>
+    <dd class="col-sm-9">@Model.ReleaseYear</dd>
+
+    <dt class="col-sm-3">Ocena</dt>
+    <dd class="col-sm-9">@Model.Rating</dd>
+
+    <dt class="col-sm-3">Opis gry</dt>
+    <dd class="col-sm-9">@Model.Description</dd>
+
+    <dt class="col-sm-3">Studio</dt>
+    <dd class="col-sm-9">@(Model.Studio?.Name ?? "Brak")</dd>
+</dl>
+
+<a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-primary">Edytuj</a>
+<a asp-action="Index" class="btn btn-secondary">Powrót do listy</a>
